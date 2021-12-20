@@ -10,14 +10,13 @@ def prediction_controller():
     sex = json.get("Sex")
     cpt = json.get("ChestPainType")
     rbp = json.get("RestingBP")
-    chl = json.get("Cholesterol")
     fbs = json.get("FastingBS")
     recg = json.get("RestingECG")
     mhr = json.get("MaxHR")
     ea = json.get("ExerciseAngina")
-    op = json.get("OldPeak")
+    op = json.get("Oldpeak")
     sts = json.get("ST_Slope")
-    results = [age, sex, cpt, rbp, chl, fbs, recg, mhr, ea, op, sts]
+    results = [age, sex, cpt, rbp, fbs, recg, mhr, ea, op, sts]
     return predict_heart_disease(results)
 
 
