@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, make_response
 from prediction import predict_heart_disease
+from flask_cors import CORS
 app = Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 @app.route("/prediction", methods=['POST'])
