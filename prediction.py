@@ -31,6 +31,8 @@ def predict_heart_disease(data):
     return str(round(y_pred, 4))
 
 
+# This is used to return the best params for the random forest classifier.
+# It only needed to be run once and I used the printed values as the params.
 def get_best_params(x_train, y_train):
 
     n_estimators = [int(x) for x in np.linspace(start=103, stop=300, num=10)]

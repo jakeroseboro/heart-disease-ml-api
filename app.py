@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify, make_response
 from prediction import predict_heart_disease
 app = Flask(__name__)
 
@@ -16,8 +16,9 @@ def prediction_controller():
     ea = json.get("ExerciseAngina")
     op = json.get("Oldpeak")
     sts = json.get("ST_Slope")
-    results = [age, sex, cpt, rbp, fbs, recg, mhr, ea, op, sts]
-    return predict_heart_disease(results)
+    data = [age, sex, cpt, rbp, fbs, recg, mhr, ea, op, sts]
+    results = predict_heart_disease(data)
+    return make_response(jsonify(results), 200)
 
 
 if __name__ == '__main__':
