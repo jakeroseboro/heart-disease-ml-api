@@ -61,3 +61,53 @@ def get_best_params(x_train, y_train):
     # Fit the random search model
     rf_random.fit(x_train, y_train)
     print(rf_random.best_params_)
+
+
+def heart_disease_stats():
+    df = pd.read_csv('heart.csv')
+    df_positive = df[df.HeartDisease != 0]
+    df_negative = df[df.HeartDisease != 1]
+
+    df["age_range"]= pd.cut(df["Age"], bins=[0, 20, 40, 60, 80, 100])
+    df2 = df.groupby("age_range").HeartDisease.sum().to_frame(name="heart_disease")
+    df2["no_heart_disease"] = df.groupby("age_range").HeartDisease.count() - df2.heart_disease
+    df2 = df2.reset_index()
+
+    df["resting_bp"] = pd.cut(df["RestingBP"], bins=[-1, 120, 240])
+    df2_bp = df.groupby("resting_bp").HeartDisease.sum().to_frame(name="heart_disease")
+    df2_bp["no_heart_disease"] = df.groupby("resting_bp").HeartDisease.count() - df2_bp.heart_disease
+    df2_bp = df2_bp.reset_index()
+
+    data = {
+        "age":{
+            "20_40_heart_disease": int(df2.loc[[1]].heart_disease.values[0]),
+            "20_40_no_heart_disease": int(df2.loc[[1]].no_heart_disease.values[0]),
+            "40_60_heart_disease": int(df2.loc[[2]].heart_disease.values[0]),
+            "40_60_no_heart_disease": int(df2.loc[[2]].no_heart_disease.values[0]),
+            "60_80_heart_disease": int(df2.loc[[3]].heart_disease.values[0]),
+            "60_80_no_heart_disease": int(df2.loc[[3]].no_heart_disease.values[0]),
+        },
+        "sex":{
+            "m_positive": int(df_positive.value_counts(['Sex']).M),
+            "m_negative": int(df_negative.value_counts(['Sex']).M),
+            "f_positive": int(df_positive.value_counts(['Sex']).F),
+            "f_negative": int(df_negative.value_counts(['Sex']).F)
+        },
+        "chest_pain_type":{
+            "ata_positive": int(df_positive.value_counts(['ChestPainType']).ATA),
+            "ata_negative": int(df_negative.value_counts(['ChestPainType']).ATA),
+            "ta_positive": int(df_positive.value_counts(['ChestPainType']).TA),
+            "ta_negative": int(df_negative.value_counts(['ChestPainType']).TA),
+            "nap_positive": int(df_positive.value_counts(['ChestPainType']).NAP),
+            "nap_negative": int(df_negative.value_counts(['ChestPainType']).NAP),
+            "asy_positive": int(df_positive.value_counts(['ChestPainType']).ASY),
+            "asy_negative": int(df_negative.value_counts(['ChestPainType']).ASY),
+        },
+        "resting_bp":{
+            "resting_bp_under_120_positive": int(df2_bp.loc[[0]].heart_disease.values[0]),
+            "resting_bp_under_120_negative": int(df2_bp.loc[[0]].no_heart_disease.values[0]),
+            "resting_bp_over_120_positive": int(df2_bp.loc[[1]].heart_disease.values[0]),
+            "resting_bp_over_120_negative": int(df2_bp.loc[[1]].no_heart_disease.values[0]),
+        }
+    }
+    return data
