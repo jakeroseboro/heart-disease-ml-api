@@ -78,6 +78,16 @@ def heart_disease_stats():
     df2_bp["no_heart_disease"] = df.groupby("resting_bp").HeartDisease.count() - df2_bp.heart_disease
     df2_bp = df2_bp.reset_index()
 
+    df["fasting_bs"] = pd.cut(df["FastingBS"], bins=[-1, 0,1])
+    df2_bs = df.groupby("fasting_bs").HeartDisease.sum().to_frame(name="heart_disease")
+    df2_bs["no_heart_disease"] = df.groupby("fasting_bs").HeartDisease.count() - df2_bs.heart_disease
+    df2_bs = df2_bs.reset_index()
+
+    df["max_hr"] = pd.cut(df["MaxHR"], bins=[59, 131, 202])
+    df2_max_hr = df.groupby("max_hr").HeartDisease.sum().to_frame(name="heart_disease")
+    df2_max_hr["no_heart_disease"] = df.groupby("max_hr").HeartDisease.count() - df2_max_hr.heart_disease
+    df2_max_hr = df2_max_hr.reset_index()
+
     data = {
         "age":{
             "20_40_heart_disease": int(df2.loc[[1]].heart_disease.values[0]),
@@ -108,6 +118,26 @@ def heart_disease_stats():
             "resting_bp_under_120_negative": int(df2_bp.loc[[0]].no_heart_disease.values[0]),
             "resting_bp_over_120_positive": int(df2_bp.loc[[1]].heart_disease.values[0]),
             "resting_bp_over_120_negative": int(df2_bp.loc[[1]].no_heart_disease.values[0]),
-        }
+        },
+        "FastingBS": {
+            "bs_over_120_positive": int(df2_bs.loc[[1]].heart_disease.values[0]),
+            "bs_over_120_negative": int(df2_bs.loc[[1]].no_heart_disease.values[0]),
+            "bs_under_120_positive": int(df2_bs.loc[[0]].heart_disease.values[0]),
+            "bs_under_120_negative": int(df2_bs.loc[[0]].no_heart_disease.values[0])
+        },
+        "RestingECG":{
+            "normal_positive": int(df_positive.value_counts(['RestingECG']).Normal),
+            "normal_negative": int(df_negative.value_counts(['RestingECG']).Normal),
+            "ST_positive": int(df_positive.value_counts(['RestingECG']).ST),
+            "ST_negative": int(df_negative.value_counts(['RestingECG']).ST),
+            "LVH_positive": int(df_positive.value_counts(['RestingECG']).LVH),
+            "LVH_negative": int(df_negative.value_counts(['RestingECG']).LVH),
+        },
+        "max_hr": {
+            "60_131_heart_disease": int(df2_max_hr.loc[[0]].heart_disease.values[0]),
+            "60_131_no_heart_disease": int(df2_max_hr.loc[[0]].no_heart_disease.values[0]),
+            "131_202_heart_disease": int(df2_max_hr.loc[[1]].heart_disease.values[0]),
+            "131_202_no_heart_disease": int(df2_max_hr.loc[[1]].no_heart_disease.values[0]),
+        },
     }
     return data
