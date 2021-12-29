@@ -166,4 +166,47 @@ def heart_disease_stats():
         }
 
     }
-    return data
+
+    list = {
+        "age": [
+            [int(df2.loc[[1]].heart_disease.values[0]),int(df2.loc[[2]].heart_disease.values[0]),int(df2.loc[[3]].heart_disease.values[0])],
+            [int(df2.loc[[1]].no_heart_disease.values[0]), int(df2.loc[[2]].no_heart_disease.values[0]), int(df2.loc[[3]].no_heart_disease.values[0])]
+        ],
+        "sex": [
+            [int(df_positive.value_counts(['Sex']).M),int(df_positive.value_counts(['Sex']).F)],
+            [int(df_negative.value_counts(['Sex']).M),int(df_negative.value_counts(['Sex']).F)]
+        ],
+        "chest_pain_type": [
+            [int(df_positive.value_counts(['ChestPainType']).ATA),int(df_positive.value_counts(['ChestPainType']).TA), int(df_positive.value_counts(['ChestPainType']).NAP),int(df_positive.value_counts(['ChestPainType']).ASY)],
+            [int(df_negative.value_counts(['ChestPainType']).ATA), int(df_negative.value_counts(['ChestPainType']).TA), int(df_negative.value_counts(['ChestPainType']).NAP), int(df_negative.value_counts(['ChestPainType']).ASY)]
+        ],
+        "resting_bp": [
+            [int(df2_bp.loc[[0]].heart_disease.values[0]),int(df2_bp.loc[[1]].heart_disease.values[0])],
+            [int(df2_bp.loc[[0]].no_heart_disease.values[0]),int(df2_bp.loc[[1]].no_heart_disease.values[0])],
+        ],
+        "fasting_bs": [
+            [int(df2_bs.loc[[1]].heart_disease.values[0]),int(df2_bs.loc[[0]].heart_disease.values[0])],
+            [int(df2_bs.loc[[1]].no_heart_disease.values[0]),int(df2_bs.loc[[0]].no_heart_disease.values[0])]
+        ],
+        "resting_ecg": [
+            [int(df_positive.value_counts(['RestingECG']).Normal),int(df_positive.value_counts(['RestingECG']).ST),int(df_positive.value_counts(['RestingECG']).LVH)],
+            [int(df_negative.value_counts(['RestingECG']).Normal), int(df_negative.value_counts(['RestingECG']).ST),int(df_negative.value_counts(['RestingECG']).LVH)]
+        ],
+        "max_hr": [
+            [int(df2_max_hr.loc[[0]].heart_disease.values[0]),int(df2_max_hr.loc[[1]].heart_disease.values[0])],
+            [int(df2_max_hr.loc[[0]].no_heart_disease.values[0]),int(df2_max_hr.loc[[1]].no_heart_disease.values[0])]
+        ],
+        "exercise_angina": [
+            [int(df_positive.value_counts(['ExerciseAngina']).Y),int(df_positive.value_counts(['ExerciseAngina']).N)],
+            [int(df_negative.value_counts(['ExerciseAngina']).Y),int(df_negative.value_counts(['ExerciseAngina']).N)]
+        ],
+        "old_peak": [
+            [int(df2_oldpeak.loc[[0]].heart_disease.values[0]),int(df2_oldpeak.loc[[1]].heart_disease.values[0])],
+            [int(df2_oldpeak.loc[[0]].no_heart_disease.values[0]),int(df2_oldpeak.loc[[1]].no_heart_disease.values[0])]
+        ],
+        "st_slope": [
+            [int(df_positive.value_counts(['ST_Slope']).Up),int(df_positive.value_counts(['ST_Slope']).Flat),int(df_positive.value_counts(['ST_Slope']).Down)],
+            [int(df_negative.value_counts(['ST_Slope']).Up),int(df_negative.value_counts(['ST_Slope']).Flat),int(df_negative.value_counts(['ST_Slope']).Down)]
+        ]
+    }
+    return [data, list]
