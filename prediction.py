@@ -88,6 +88,11 @@ def heart_disease_stats():
     df2_max_hr["no_heart_disease"] = df.groupby("max_hr").HeartDisease.count() - df2_max_hr.heart_disease
     df2_max_hr = df2_max_hr.reset_index()
 
+    df["old_peak"] = pd.cut(df["Oldpeak"], bins=[-7, 1, 7])
+    df2_oldpeak = df.groupby("old_peak").HeartDisease.sum().to_frame(name="heart_disease")
+    df2_oldpeak["no_heart_disease"] = df.groupby("old_peak").HeartDisease.count() - df2_oldpeak.heart_disease
+    df2_oldpeak = df2_oldpeak.reset_index()
+
     data = {
         "age":{
             "20_40_heart_disease": int(df2.loc[[1]].heart_disease.values[0]),
@@ -119,13 +124,13 @@ def heart_disease_stats():
             "resting_bp_over_120_positive": int(df2_bp.loc[[1]].heart_disease.values[0]),
             "resting_bp_over_120_negative": int(df2_bp.loc[[1]].no_heart_disease.values[0]),
         },
-        "FastingBS": {
+        "fasting_bs": {
             "bs_over_120_positive": int(df2_bs.loc[[1]].heart_disease.values[0]),
             "bs_over_120_negative": int(df2_bs.loc[[1]].no_heart_disease.values[0]),
             "bs_under_120_positive": int(df2_bs.loc[[0]].heart_disease.values[0]),
             "bs_under_120_negative": int(df2_bs.loc[[0]].no_heart_disease.values[0])
         },
-        "RestingECG":{
+        "resting_ecg":{
             "normal_positive": int(df_positive.value_counts(['RestingECG']).Normal),
             "normal_negative": int(df_negative.value_counts(['RestingECG']).Normal),
             "ST_positive": int(df_positive.value_counts(['RestingECG']).ST),
@@ -139,5 +144,26 @@ def heart_disease_stats():
             "131_202_heart_disease": int(df2_max_hr.loc[[1]].heart_disease.values[0]),
             "131_202_no_heart_disease": int(df2_max_hr.loc[[1]].no_heart_disease.values[0]),
         },
+        "exercise_angina":{
+            "exercise_angina_positive": int(df_positive.value_counts(['ExerciseAngina']).Y),
+            "exercise_angina_negative": int(df_negative.value_counts(['ExerciseAngina']).Y),
+            "no_exercise_angina_positive": int(df_positive.value_counts(['ExerciseAngina']).N),
+            "no_exercise_angina_negative": int(df_negative.value_counts(['ExerciseAngina']).N)
+        },
+        "old_peak":{
+            "-7_1_heart_disease": int(df2_oldpeak.loc[[0]].heart_disease.values[0]),
+            "-7_1_no_heart_disease": int(df2_oldpeak.loc[[0]].no_heart_disease.values[0]),
+            "1_7_heart_disease": int(df2_oldpeak.loc[[1]].heart_disease.values[0]),
+            "1_7_no_heart_disease": int(df2_oldpeak.loc[[1]].no_heart_disease.values[0]),
+        },
+        "st_slope":{
+            "Up_positive": int(df_positive.value_counts(['ST_Slope']).Up),
+            "Up_negative": int(df_negative.value_counts(['ST_Slope']).Up),
+            "Flat_positive": int(df_positive.value_counts(['ST_Slope']).Flat),
+            "Flat_negative": int(df_negative.value_counts(['ST_Slope']).Flat),
+            "Down_positive": int(df_positive.value_counts(['ST_Slope']).Down),
+            "Down_negative": int(df_negative.value_counts(['ST_Slope']).Down),
+        }
+
     }
     return data
