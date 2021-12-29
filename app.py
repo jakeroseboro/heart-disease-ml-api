@@ -29,7 +29,8 @@ def prediction_controller():
 @app.route("/data", methods=['GET'])
 def heart_disease_data_controller():
     try:
-        results = heart_disease_stats()
+        request_format = request.args.get('format')
+        results = heart_disease_stats(request_format)
         return make_response(jsonify(results), 200)
     except:
         return make_response('there was an error', 500)

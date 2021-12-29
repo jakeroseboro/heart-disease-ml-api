@@ -63,7 +63,7 @@ def get_best_params(x_train, y_train):
     print(rf_random.best_params_)
 
 
-def heart_disease_stats():
+def heart_disease_stats(request_format):
     df = pd.read_csv('heart.csv')
     df_positive = df[df.HeartDisease != 0]
     df_negative = df[df.HeartDisease != 1]
@@ -209,4 +209,10 @@ def heart_disease_stats():
             [int(df_negative.value_counts(['ST_Slope']).Up),int(df_negative.value_counts(['ST_Slope']).Flat),int(df_negative.value_counts(['ST_Slope']).Down)]
         ]
     }
-    return [data, data_list]
+
+    if request_format == "dict":
+        return data
+    if request_format == "list":
+        return data_list
+    else:
+        return data
