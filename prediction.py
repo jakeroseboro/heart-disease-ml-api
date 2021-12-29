@@ -167,7 +167,7 @@ def heart_disease_stats():
 
     }
 
-    list = {
+    data_list = {
         "age": [
             [int(df2.loc[[1]].heart_disease.values[0]),int(df2.loc[[2]].heart_disease.values[0]),int(df2.loc[[3]].heart_disease.values[0])],
             [int(df2.loc[[1]].no_heart_disease.values[0]), int(df2.loc[[2]].no_heart_disease.values[0]), int(df2.loc[[3]].no_heart_disease.values[0])]
@@ -209,4 +209,4 @@ def heart_disease_stats():
             [int(df_negative.value_counts(['ST_Slope']).Up),int(df_negative.value_counts(['ST_Slope']).Flat),int(df_negative.value_counts(['ST_Slope']).Down)]
         ]
     }
-    return [data, list]
+    return [data, data_list]
