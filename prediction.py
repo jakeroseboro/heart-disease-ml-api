@@ -2,31 +2,54 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import KNNImputer
+from sklearn.metrics import classification_report
 
 
 def predict_heart_disease(data):
 
     df = pd.read_csv('heart.csv')
-    df = df.drop("Cholesterol", 1)
+    # Remove outliers
+    df = df[df.RestingBP >= 84]
+    df = df[df.Cholesterol <= 500]
+
+    # Replace string fields with ints
     df['Sex'] = df['Sex'].replace(['F', 'M'], [0,  1])
     df["ChestPainType"] = df["ChestPainType"].replace(["TA", "ATA", "NAP", "ASY"], [0,1,2,3])
     df["RestingECG"] = df["RestingECG"].replace(["Normal", "ST", "LVH"],[0,1,2])
     df["ExerciseAngina"] = df["ExerciseAngina"].replace(["Y", "N"], [0,1])
     df["ST_Slope"] = df["ST_Slope"].replace(["Up", "Flat", "Down"], [0,1,2])
 
-    new_x = pd.DataFrame(
-        {'Age': [data[0]], 'Sex': [data[1]], 'ChestPainType': [data[2]], 'RestingBP': [data[3]], 'FastingBS': [data[4]],
-         'RestingECG': [data[5]], 'MaxHR': [data[6]], 'ExerciseAngina': [data[7]], 'Oldpeak': [data[8]], 'ST_Slope': [data[9]]})
+    # Use KNN to replace null values for cholesterol
+    df['Cholesterol'].replace(to_replace=0, value=np.nan, inplace=True)
+    imputer = KNNImputer(n_neighbors=5)
+    fixed = imputer.fit_transform(df)
+    cholesterol = []
+    for i in range(0, len(df)):
+        cholesterol.append(fixed[i][4])
+    df["Cholesterol"] = cholesterol
 
-    x = df.drop('HeartDisease', 1)
+    # Make a copy of the data
+    df1 = df.copy()
+    df1.drop(columns='HeartDisease', axis=1, inplace=True)
 
     # Generate test and training data
-    x_train, x_test, y_train, y_test = train_test_split(x, df['HeartDisease'], test_size=0.2, random_state=0)
+    x_train, x_test, y_train, y_test = train_test_split(df1, df['HeartDisease'], test_size=0.2, random_state=0)
 
     clf = RandomForestClassifier(n_estimators=234, min_samples_split=10, min_samples_leaf=2, max_features='sqrt',
                                  max_depth=80, bootstrap=True)
 
     clf.fit(x_train, y_train)
+    y_pred_prob = clf.predict(x_test)
+    print(classification_report(y_test, y_pred_prob))
+
+    # predict prob based on user input
+    new_x = pd.DataFrame(
+        {'Age': [data[0]], 'Sex': [data[1]], 'ChestPainType': [data[2]], 'RestingBP': [data[3]],
+         'Cholesterol': [data[4]], 'FastingBS': [data[5]],
+         'RestingECG': [data[6]], 'MaxHR': [data[7]], 'ExerciseAngina': [data[8]], 'Oldpeak': [data[9]],
+         'ST_Slope': [data[10]]})
+
     y_pred = clf.predict_proba(new_x)[:,1][0]
     return str(round(y_pred, 4))
 
