@@ -88,6 +88,9 @@ db.init_app(app)
 guard.init_app(app, User)
 cors.init_app(app)
 
+with app.app_context():
+    db.create_all()
+
 
 @app.route("/prediction", methods=['POST'])
 @flask_praetorian.auth_required
@@ -171,5 +174,4 @@ def refresh():
 
 
 if __name__ == '__main__':
-    db.create_all()
     app.run(debug=True)
