@@ -1,54 +1,96 @@
-from flask import Flask, request, jsonify, make_response, redirect, flash, url_for, render_template
+from flask import Flask, request, jsonify, make_response
 from prediction import predict_heart_disease, heart_disease_stats
-from flask_cors import CORS
+import flask_cors
 import uuid
-from flask_login import LoginManager, UserMixin, login_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import *
-from flask_bootstrap import Bootstrap
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField
-from wtforms.validators import InputRequired, Length, Email
-from werkzeug.security import generate_password_hash, check_password_hash
+import flask_praetorian
+
+db = SQLAlchemy()
+guard = flask_praetorian.Praetorian()
+cors = flask_cors.CORS()
+
+
+class User(db.Model):
+    id = Column(Integer, primary_key=True)
+    username = Column(Text, unique=True)
+    hashed_password = Column(Text)
+    roles = Column(Text)
+    is_active = Column(Boolean, default=True, server_default="true")
+
+    @property
+    def identity(self):
+        """
+        *Required Attribute or Property*
+
+        flask-praetorian requires that the user class has an ``identity`` instance
+        attribute or property that provides the unique id of the user instance
+        """
+        return self.id
+
+    @property
+    def rolenames(self):
+        """
+        *Required Attribute or Property*
+
+        flask-praetorian requires that the user class has a ``rolenames`` instance
+        attribute or property that provides a list of strings that describe the roles
+        attached to the user instance
+        """
+        try:
+            return self.roles.split(",")
+        except Exception:
+            return []
+
+    @property
+    def password(self):
+        """
+        *Required Attribute or Property*
+
+        flask-praetorian requires that the user class has a ``password`` instance
+        attribute or property that provides the hashed password assigned to the user
+        instance
+        """
+        return self.hashed_password
+
+    @classmethod
+    def lookup(cls, username):
+        """
+        *Required Method*
+
+        flask-praetorian requires that the user class implements a ``lookup()``
+        class method that takes a single ``username`` argument and returns a user
+        instance if there is one that matches or ``None`` if there is not.
+        """
+        return cls.query.filter_by(username=username).one_or_none()
+
+    @classmethod
+    def identify(cls, id):
+        """
+        *Required Method*
+
+        flask-praetorian requires that the user class implements an ``identify()``
+        class method that takes a single ``id`` argument and returns user instance if
+        there is one that matches or ``None`` if there is not.
+        """
+        return cls.query.get(id)
+
+    def is_valid(self):
+        return self.is_active
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-app.secret_key = str(uuid.uuid4())
-cors = CORS(app, resources={r"/*": {"origins": "*"}})
-db = SQLAlchemy(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-Bootstrap(app)
-login_manager.login_view = 'login'
-
-
-class User(UserMixin, db.Model):
-    id = Column(Integer, primary_key=True)
-    name = Column(String(40), nullable=False)
-    email = Column(String(50), unique=True, nullable=False)
-    password = Column(String(80), nullable=False)
-
-
-# WTForm for Login
-class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[InputRequired(), Email(message='Invalid email'), Length(max=50)])
-    password = PasswordField('Password', validators=[InputRequired(), Length(min=4, max=80)])
-
-
-# WTForm for Sign Up
-class SignUpForm(FlaskForm):
-    name = StringField('Name', validators=[InputRequired(), Length(min=1, max=40)])
-    email = StringField('Email', validators=[InputRequired(), Email(message='Invalid email')])
-    password = PasswordField('Password', validators=[InputRequired(), Length(min=4, max=80)])
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+app.config['JWT_ACCESS_LIFESPAN'] = {'hours': 24}
+app.config['JWT_REFRESH_LIFESPAN'] = {'days': 30}
+app.config['SECRET_KEY'] = str(uuid.uuid4())
+db.init_app(app)
+guard.init_app(app, User)
+cors.init_app(app)
 
 
 @app.route("/prediction", methods=['POST'])
-@login_required
+@flask_praetorian.auth_required
 def prediction_controller():
     try:
         json = request.get_json()
@@ -72,68 +114,60 @@ def prediction_controller():
 
 
 @app.route("/data", methods=['GET'])
-@login_required
+@flask_praetorian.auth_required
 def heart_disease_data_controller():
     try:
         request_format = request.args.get('format')
         results = heart_disease_stats(request_format)
         return make_response(jsonify(results), 200)
     except:
-        return make_response('there was an error', 500)
+        return make_response('There was an error', 500)
 
 
-@app.route("/signup", methods=['POST', 'GET'])
-def signup():
-    # Initialize form
-    form = SignUpForm()
-
-    if form.validate_on_submit():
-        # Password security
-        hashed_password = generate_password_hash(form.password.data, method="sha256")
-
-        # Check if user already exists in the database
-        user_already_exists = User.query.filter_by(email=form.email.data).first()
-        if user_already_exists:
-            flash("You already have an account with that email address!")
-            return redirect(url_for("login"))
-
-        # Create a new user, then go to Login page
-        else:
-            new_user = User(name=form.name.data, email=form.email.data, password=hashed_password)
-            db.session.add(new_user)
-            db.session.commit()
-            return redirect(url_for("login"))
-
-    return render_template("signup.html", form=form)
-
-
-# Login page
-@app.route("/login", methods=['POST', 'GET'])
+# Login
+@app.route("/login", methods=['POST'])
 def login():
-    # Initialize form
-    form = LoginForm()
+    try:
+        req = request.get_json(force=True)
+        username = req.get('username', None)
+        password = req.get('password', None)
+        user = guard.authenticate(username, password)
+        return make_response({"auth_token": guard.encode_jwt_token(user)}, 200)
+    except:
+        return make_response('There was an error', 500)
 
-    if form.validate_on_submit():
 
-        # Check to see if email exists in the database
-        email_exists = User.query.filter_by(email=form.email.data).first()
-        if email_exists:
-
-            # Check to see if the password matches for that email
-            if check_password_hash(email_exists.password, form.password.data):
-                login_user(email_exists)
-                flash("Login successful!")
-                next_url = 'http://' + request.form.get("next")
-                print(next_url)
-                return redirect(next_url)
-            else:
-                flash("Incorrect password")
-                redirect(url_for("login"))
+@app.route("/signup", methods =['POST'])
+def signup():
+    try:
+        req = request.get_json(force=True)
+        username = req.get('username', None)
+        password = req.get('password', None)
+        if not (User.lookup(username=username)):
+            db.session.add(
+                User(
+                    username=username,
+                    hashed_password=guard.hash_password(password),
+                    roles="operator",
+                )
+            )
+            db.session.commit()
+            user = guard.authenticate(username, password)
+            return make_response({"auth_token": guard.encode_jwt_token(user)}, 200)
         else:
-            flash("You do not have account yet. Please sign up.")
-            return redirect(url_for("signup"))
+            return make_response("User already exists. Please log in.", 500)
+    except:
+        return make_response('There was an error', 500)
 
-    return render_template('login.html', form=form)
+
+@app.route("/refresh", methods=['POST'])
+def refresh():
+    try:
+        old_token = request.get_data()
+        new_token = guard.refresh_jwt_token(old_token)
+        return make_response(new_token)
+    except:
+        return make_response('There was an error', 500)
 
 
 if __name__ == '__main__':
