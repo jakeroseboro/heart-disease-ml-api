@@ -90,7 +90,7 @@ app.config['JWT_REFRESH_LIFESPAN'] = {'days': 30}
 app.config['SECRET_KEY'] = str(uuid.uuid4())
 db.init_app(app)
 guard.init_app(app, User)
-cors.init_app(app)
+cors.init_app(app, resources={r"/*": {"origins": "*"}})
 
 with app.app_context():
     db.create_all()
