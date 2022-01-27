@@ -5,6 +5,8 @@ import uuid
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import *
 import flask_praetorian
+import sys
+import logging
 
 db = SQLAlchemy()
 guard = flask_praetorian.Praetorian()
@@ -80,6 +82,8 @@ class User(db.Model):
 
 
 app = Flask(__name__)
+app.logger.addHandler(logging.StreamHandler(sys.stdout))
+app.logger.setLevel(logging.ERROR)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['JWT_ACCESS_LIFESPAN'] = {'hours': 24}
 app.config['JWT_REFRESH_LIFESPAN'] = {'days': 30}
